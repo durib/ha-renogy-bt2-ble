@@ -29,7 +29,9 @@ import yaml
 
 from bleak import BleakScanner, BleakClient, BleakError
 import paho.mqtt.publish as publish
-import config
+#import config
+
+from store import load_user_config
 
 
 class BT2Data:
@@ -39,7 +41,16 @@ class BT2Data:
 
 class BT2Info:
 
-    ADDR = config.BT2_ADDR
+    #logger = get_logger(verbose=False)
+    config = load_user_config()
+
+    ADDR = config.address
+    mqtt_user = config.mqtt_user
+    mqtt_password = config.mqtt_password
+    mqtt_broker = config.mqtt_broker
+    quiet = False
+
+    auth = {"username": mqtt_user, "password": mqtt_password}
 
     # TX_SERVICE = "0000ffd0-0000-1000-8000-00805f9b34fb"
     # Tx characteristic. Sends data to the BT2
@@ -85,8 +96,8 @@ class BT2Info:
         self.bt_device = await BleakScanner.find_device_by_address(self.addr)
         if self.bt_device is None:
             raise Exception(
-                "Couldn't find BLE device - is it in range? is another client connected? "
-                + " Check 'hcitool con' and force disconnect if necessary"
+                "Couldn't find BLE device %s - is it in range? is another client connected? "
+                + " Check 'hcitool con' and force disconnect if necessary", self.addr
             )
         self.name = self.bt_device.name
         self.addr = self.bt_device.address
@@ -184,7 +195,7 @@ class BT2Info:
             msg = "Publishing Discovery information to Home Assistant"
             logger.info(msg)
 
-            f = open("bt2_mqtt.yaml", "r")
+            f = open("/app/bt2_mqtt.yaml", "r")
             y = yaml.safe_load(f)
             for entry in y:
                 if not "unique_id" in entry:
@@ -196,7 +207,7 @@ class BT2Info:
                 if not "state_topic" in entry:
                     entry["state_topic"] = f"renogy-bt2/{entry['unique_id']}"
                 if not "device" in entry:
-                    entry["device"] = {"name": "Renogy DCC50S", "identifiers": bt2.name}
+                    entry["device"] = {"name": "Renogy DCC30S", "identifiers": bt2.name}
 
                 logger.debug(
                     f"DISCOVERY_PUB=homeassistant/sensor/{entry['object_id']}/config\n"
@@ -206,8 +217,8 @@ class BT2Info:
                     topic=f"homeassistant/sensor/{entry['object_id']}/config",
                     payload=json.dumps(entry),
                     retain=True,
-                    hostname=config.MQTT_HOST,
-                    auth=auth,
+                    hostname=self.mqtt_broker,
+                    auth=self.auth,
                 )
 
             self.discovery_info_sent = True
@@ -216,26 +227,30 @@ class BT2Info:
         mqtt_msgs = []
         for k, v in bt2.data.__dict__.items():
             mqtt_msgs.append({"topic": f"renogy-bt2/bt2_{k}", "payload": v})
-            if not args.quiet:
+            if not self.quiet:
                 print(f"{k} = {v}")
 
-        publish.multiple(mqtt_msgs, hostname=config.MQTT_HOST, auth=auth)
+        publish.multiple(mqtt_msgs, hostname=self.mqtt_broker, auth=self.auth)
         logger.info("Published updated sensor stats to MQTT")
 
 
+logger = logging.getLogger("Renogy BT-2")
+logger.setLevel(logging.DEBUG)
 
-if hasattr(config, "BT2_LOG_FILE"):
+logger.info("Starting up")
+bt2 = BT2Info()
+
+if hasattr(bt2, "BT2_LOG_FILE"):
     logging.basicConfig(
-        filename=config.BT2_LOG_FILE,
+        filename=bt2.BT2_LOG_FILE,
         format="%(asctime)s %(levelname)s:%(message)s",
         encoding="utf-8",
         level=logging.WARNING,
     )
-logger = logging.getLogger("Renogy BT-2")
-logger.setLevel(logging.INFO)
 
-auth = {"username": config.MQTT_USER, "password": config.MQTT_PASS}
 
+
+"""
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
 parser.add_argument(
@@ -257,9 +272,8 @@ if args.debug:
 if not args.quiet:
     logger.addHandler(logging.StreamHandler())
 
+"""
 
-logger.info("Starting up")
-bt2 = BT2Info()
 while bt2.bt_device is None:
     try:
         bt2.locate_device()
@@ -267,6 +281,6 @@ while bt2.bt_device is None:
         logger.warning(f"Error searching for BT-2: {err}, {type(err)}")
     time.sleep(5)
 
-bt2.start_loop(args.interval)
+bt2.start_loop(10)
 
 

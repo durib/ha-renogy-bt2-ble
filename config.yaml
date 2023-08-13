@@ -1,0 +1,27 @@
+# https://github.com/durib/ha-renogy-bt2-ble
+name: Renogy BT2
+version: "0.0.1"
+slug: renogy-bt2
+description: Monitors Renogy BT2 over bluetooth
+url: https://github.com/durib/ha-renogy-bt2-ble
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+host_dbus: true
+apparmor: false
+services:
+  - mqtt:need
+options:
+  address: FC:A8:9B:23:7B:BF
+  mqtt_user: ""
+  mqtt_password: ""
+  mqtt_broker: "core-mosquitto"
+schema:
+  address: str
+  mqtt_user: "str?"
+  mqtt_password: "str?"
+  mqtt_broker: "str"
