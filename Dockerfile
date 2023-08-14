@@ -8,15 +8,10 @@ RUN \
     curl -sSLf -o /usr/bin/tempio \
     "https://github.com/home-assistant/tempio/releases/download/${TEMPIO_VERSION}/tempio_${BUILD_ARCH}"
 
-# install python3
-RUN apk add python3 py-pip
-
 # Copy root filesystem
 COPY rootfs /
-
 WORKDIR /app
 
+# install python3
+RUN apk add python3 py-pip
 RUN pip3 install -r requirements.txt
-#RUN chmod a+x run.sh
-
-#CMD [ "./run.sh" ]

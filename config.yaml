@@ -1,8 +1,8 @@
 # https://github.com/durib/ha-renogy-bt2-ble
-name: Renogy BT2
+name: Renogy DCC BT-2
 version: "0.0.1"
-slug: renogy-bt2
-description: Monitors Renogy BT2 over bluetooth
+slug: renogy-dcc-bt2
+description: Monitors Renogy DCC50S/DCC30S over Bluetooth using Renogy BT-2 module.
 url: https://github.com/durib/ha-renogy-bt2-ble
 arch:
   - armhf
@@ -20,8 +20,14 @@ options:
   mqtt_user: ""
   mqtt_password: ""
   mqtt_broker: "core-mosquitto"
+  verbose_log: false
+  sample_period: 2.0
+  publish_period: 2.0
 schema:
   address: str
   mqtt_user: "str?"
   mqtt_password: "str?"
   mqtt_broker: "str"
+  verbose_log: "bool"
+  sample_period: "float"
+  publish_period: "float?"
