@@ -17,8 +17,7 @@
   device_class: 'voltage'
   unit_of_measurement: 'V'
   #force_update: True
-                        
-
+ 
 - name: 'Combined Charging Amps'
   object_id: 'bt2_combined_charging_amps'
   device_class: 'current'
@@ -117,7 +116,7 @@
   state_class: 'total_increasing'
   unit_of_measurement: 'Wh'
 
-- name: 'Charging State Bits'
+- name: 'Charging State'
   object_id: 'bt2_charging_state'
 
 - name: 'Error State Bits - 1'

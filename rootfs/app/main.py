@@ -135,6 +135,16 @@ class BT2Info:
     def _callback(self, sender, data):
         logger.debug("DEBUG: DATA=%s", data.hex())
 
+        charging_state_map = {
+            "00": "Not charging",
+            "02": "Bulk charge (MPPT)",
+            "03": "Equalization charge",
+            "04": "Boost charge",
+            "05": "Float charge",
+            "06": "Current-limit charge",
+            "08": "Direct charge (Alternator)",
+        }
+
         self.data.aux_batt_v = int.from_bytes(data[5:7], byteorder="big") / 10
         self.data.combined_charging_amps = int.from_bytes(data[7:9], byteorder="big") / 100
         self.data.controller_temp = int.from_bytes(data[9:10], byteorder="big", signed=True)
@@ -164,7 +174,7 @@ class BT2Info:
         self.data.accumulated_generated_watts = int.from_bytes(data[59:63], byteorder="big")
         # 11e, 11f reserved
         # 120 high 8 bits reserved
-        self.data.charging_state = bin(int.from_bytes(data[68:69], byteorder="big"))
+        self.data.charging_state = charging_state_map.get(data[68:69].hex(), "Unknown")
         self.data.error_bits_1 = bin(int.from_bytes(data[69:71], byteorder="big"))
         self.data.error_bits_2 = bin(int.from_bytes(data[71:73], byteorder="big"))
 
